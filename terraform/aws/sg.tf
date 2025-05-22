@@ -3,10 +3,10 @@ resource "aws_security_group" "ll-pro-sg-front" {
   description = "Security Group de instancias app (frontend/backend) en pro2"
   vpc_id      = aws_vpc.ll-pro-VPC-front.id
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    self      = true
     # description = "Permitir tráfico interno entre instancias del mismo SG"
   }
   ingress {
@@ -41,10 +41,10 @@ resource "aws_security_group" "ll-test-sg-front" {
   description = "Security Group de instancias app (frontend/backend) en pro2"
   vpc_id      = aws_vpc.ll-test-VPC-front.id
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    self      = true
     # description = "Permitir tráfico interno entre instancias del mismo SG"
   }
   ingress {
