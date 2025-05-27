@@ -2,7 +2,7 @@ ldap_domain: "dc=mosquito,dc=com"
 ldap_domain_clean: "mosquito.com"    # Dominio en formato plano
 ldap_admin_password: "Voleypadel123" # Cambia la contraseña aquí
 ldap_base_dn: "dc=mosquito,dc=com"
-ldap_org: "Multi-cloud"
+ldap_org: "multi-cloud"
 ldap_root_dn: "cn=admin,dc=mosquito,dc=com"
 ldap_users_ou: "ou=users,dc=mosquito,dc=com"
 ldap_groups_ou: "ou=groups,dc=mosquito,dc=com"

@@ -1,0 +1,25 @@
+# Crear el grupo "admins"
+dn: cn=admins,ou=groups,dc=mosquito,dc=com
+objectClass: top
+objectClass: posixGroup
+cn: admins
+gidNumber: 5000
+
+# Crear el usuario "usuario1"
+dn: uid=usuario1,ou=users,dc=mosquito,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: top
+uid: usuario1
+sn: Usuario1
+cn: Usuario Uno
+userPassword: {SSHA}ICiDPDgZYOSpLZIQceZmngtUBQlQPnMC
+gidNumber: 5000
+uidNumber: 10000
+homeDirectory: /home/usuario1
+
+# Añadir usuario1 al grupo "admins"
+dn: cn=admins,ou=groups,dc=mosquito,dc=com
+changetype: modify
+add: memberUid
+memberUid: usuario1

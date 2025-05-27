@@ -12,10 +12,19 @@
         name:
           - slapd
           - ldap-utils
+          - debconf-utils
         state: present
         update_cache: yes
 
-    - name: Configurar la contraseña del administrador LDAP (slapd)
+    - name: Eliminar configuración previa de slapd (si existe)
+      shell: |
+        systemctl stop slapd || true
+        rm -rf /etc/ldap/slapd.d/*
+        rm -rf /var/lib/ldap/*
+      args:
+        executable: /bin/bash
+
+    - name: Preconfigurar slapd con debconf (Contraseña, Dominio, etc.)
       debconf:
         name: slapd
         question: "{{ item.question }}"
@@ -27,8 +36,17 @@
         - { question: "slapd/password2", value: "{{ ldap_admin_password }}", vtype: "password" }
         - { question: "slapd/domain", value: "{{ ldap_domain_clean }}", vtype: "string" }
         - { question: "slapd/organization", value: "{{ ldap_org }}", vtype: "string" }
+        - { question: "slapd/no_configuration", value: "false", vtype: "boolean" }
 
-    - name: Reiniciar el servicio slapd
+    - name: Reconfigurar slapd de forma no interactiva
+      shell: |
+        echo "slapd slapd/no_configuration boolean false" | debconf-set-selections
+        dpkg-reconfigure -f noninteractive slapd
+      args:
+        executable: /bin/bash
+
+
+    - name: Reiniciar el servicio slapd (para aplicar configuraciones)
       service:
         name: slapd
         state: restarted
@@ -48,6 +66,17 @@
       args:
         executable: /bin/bash
       ignore_errors: yes  # Por si ya existen
+
+    - name: Copiar datos LDIF al servidor
+      copy:
+        src: ./datos-ldap/data.ldif
+        dest: /tmp/data.ldif
+
+    - name: Aplicar LDIF al servidor LDAP (usuarios, grupos, etc.)
+      shell: ldapadd -x -D "{{ ldap_root_dn }}" -w "{{ ldap_admin_password }}" -f /tmp/data.ldif
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
 
     - name: Mostrar estructura LDAP creada
       shell: ldapsearch -x -LLL -b "{{ ldap_base_dn }}"
