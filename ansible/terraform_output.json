@@ -1,0 +1,12 @@
+{
+  "ip_public_server_2": {
+    "sensitive": false,
+    "type": "string",
+    "value": "52.90.57.212"
+  },
+  "ip_server_2": {
+    "sensitive": false,
+    "type": "string",
+    "value": "192.168.1.60"
+  }
+}
