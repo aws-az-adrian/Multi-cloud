@@ -17,23 +17,22 @@ data "aws_ami" "amazon_linux2" {
 }
 
 
+# data "aws_ami" "ubuntu_24" {
+#   most_recent = true
+#   owners      = ["099720109477"] # ID de Canonical
 
-data "aws_ami" "ubuntu_24" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
+#   filter {
+#     name   = "name"
+#     values = ["ubuntu/images/hvm-ssd/ubuntu-24.04-amd64-server-*"]
+#   }
 
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-noble-24.04-amd64-server-*"]
-  }
+#   filter {
+#     name   = "virtualization-type"
+#     values = ["hvm"]
+#   }
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
-  }
-}
+#   filter {
+#     name   = "architecture"
+#     values = ["x86_64"]
+#   }
+# }
