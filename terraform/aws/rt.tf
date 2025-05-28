@@ -10,7 +10,6 @@ resource "aws_route_table" "asir-rt-public-2" {
 
 }
 resource "aws_route_table_association" "ll-test-RT_assoc-front" {
-<<<<<<< HEAD
   subnet_id      = aws_subnet.subnet-aws-server.id
   route_table_id = aws_route_table.asir-rt-public-2.id
 }
@@ -27,8 +26,3 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.subnet-aws-client.id
   route_table_id = aws_route_table.asir-rt-private-2.id
 }
-=======
-  subnet_id      = aws_subnet.subnet-aws.id
-  route_table_id = aws_route_table.asir-rt-public-2.id
-}
->>>>>>> ee28cd86c9a36fe0fe3c53d5140d59a8183b2820

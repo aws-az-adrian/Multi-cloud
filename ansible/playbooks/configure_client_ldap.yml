@@ -1,0 +1,105 @@
+---
+- name: Configurar cliente LDAP
+  hosts: ldap_clients
+  become: yes
+
+  vars_files:
+    - vars/ldap-client.yml
+
+  tasks:
+    - name: Instalar paquetes necesarios para LDAP (Amazon Linux)
+      yum:
+        name:
+          - nss-pam-ldapd
+          - openldap-clients
+          - nscd
+          - oddjob-mkhomedir
+        state: present
+
+    - name: Crear directorio /etc/ldap si no existe
+      file:
+        path: /etc/ldap
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Configurar /etc/openldap/ldap.conf
+      copy:
+        dest: /etc/openldap/ldap.conf
+        content: |
+          URI ldap://{{ ldap_server_ip }}
+          BASE {{ ldap_base_dn }}
+      notify: Reiniciar servicios LDAP
+
+    - name: Configurar /etc/nslcd.conf
+      copy:
+        dest: /etc/nslcd.conf
+        content: |
+          uid nslcd
+          gid ldap
+          uri ldap://{{ ldap_server_ip }}
+          base {{ ldap_base_dn }}
+          binddn {{ ldap_root_dn }}
+          bindpw {{ ldap_admin_password }}
+      notify: Reiniciar servicios LDAP
+
+    - name: Configurar /etc/nsswitch.conf
+      lineinfile:
+        path: /etc/nsswitch.conf
+        regexp: '^{{ item.key }}:'
+        line: '{{ item.key }}:     files ldap'
+      loop:
+        - { key: 'passwd' }
+        - { key: 'group' }
+        - { key: 'shadow' }
+      notify: Reiniciar servicios LDAP
+
+    - name: Configurar PAM para LDAP y creación de home
+      blockinfile:
+        path: /etc/pam.d/system-auth
+        marker: "# {mark} ANSIBLE MANAGED LDAP CONFIG"
+        block: |
+          auth        sufficient    pam_unix.so try_first_pass nullok
+          auth        sufficient    pam_ldap.so use_first_pass
+          auth        required      pam_deny.so
+
+          account     required      pam_unix.so
+          account     sufficient    pam_ldap.so
+          account     required      pam_permit.so
+
+          password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok
+          password    sufficient    pam_ldap.so use_authtok
+          password    required      pam_deny.so
+
+          session     required      pam_limits.so
+          session     required      pam_mkhomedir.so skel=/etc/skel/ umask=0022
+          session     required      pam_unix.so
+          session     optional      pam_ldap.so
+
+    - name: Asegurar que el servicio nslcd está activo
+      systemd:
+        name: nslcd
+        state: started
+        enabled: yes
+
+    - name: Asegurar que el servicio nscd está activo
+      systemd:
+        name: nscd
+        state: started
+        enabled: yes
+
+    - name: Asegurar que oddjobd está activo para crear home
+      systemd:
+        name: oddjobd
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Reiniciar servicios LDAP
+      systemd:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - nslcd
+        - nscd
