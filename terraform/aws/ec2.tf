@@ -1,27 +1,23 @@
 # Instancias EC2 Ubuntu server 24.04
 resource "aws_instance" "asir-server-2" {
-  ami                    = "ami-084568db4383264d4"
-  instance_type          = "t2.micro"
-<<<<<<< HEAD
-  subnet_id              = aws_subnet.subnet-aws-server.id
-=======
-  subnet_id              = aws_subnet.subnet-aws.id
->>>>>>> ee28cd86c9a36fe0fe3c53d5140d59a8183b2820
+  ami                         = "ami-084568db4383264d4"
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_subnet.subnet-aws.id
   associate_public_ip_address = true
-  key_name               = "my-key-asir"
-  user_data = file("user_data.sh")
-  vpc_security_group_ids = [aws_security_group.asir-sg-server-2.id] 
+  key_name                    = "my-key-asir"
+  user_data                   = file("user_data.sh")
+  vpc_security_group_ids      = [aws_security_group.asir-sg-server-2.id]
   tags = {
     Name = "asir-server-2"
   }
   provisioner "file" {
     source      = "keys/my-key-asir.pem"
     destination = "/home/ubuntu/my-key-asir.pem"
-        
-      connection {
+
+    connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = file("keys/my-key-asir.pem")  # Tu clave para conectarte a Ubuntu
+      private_key = file("keys/my-key-asir.pem") # Tu clave para conectarte a Ubuntu
       host        = self.public_ip
     }
   }
@@ -30,11 +26,11 @@ resource "aws_instance" "asir-server-2" {
     inline = [
       "chmod 400 /home/ubuntu/my-key-asir.pem"
     ]
-            
-      connection {
+
+    connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = file("keys/my-key-asir.pem")  # Tu clave para conectarte a Ubuntu
+      private_key = file("keys/my-key-asir.pem") # Tu clave para conectarte a Ubuntu
       host        = self.public_ip
     }
 
@@ -46,14 +42,8 @@ resource "aws_instance" "asir-server-2" {
 resource "aws_instance" "asir-cliente-2" {
   ami                    = data.aws_ami.amazon_linux2.id
   instance_type          = "t2.micro"
-<<<<<<< HEAD
-  subnet_id              = aws_subnet.subnet-aws-client.id
-  key_name               = "my-key-asir"
-=======
   subnet_id              = aws_subnet.subnet-aws.id
   key_name               = "my-key-asir"
-  associate_public_ip_address = true
->>>>>>> ee28cd86c9a36fe0fe3c53d5140d59a8183b2820
   vpc_security_group_ids = [aws_security_group.asir-sg-client-2.id]
   tags = {
     Name = "asir-cliente-2"
