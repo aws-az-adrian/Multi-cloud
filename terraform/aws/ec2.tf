@@ -2,7 +2,7 @@
 resource "aws_instance" "asir-server-2" {
   ami                    = "ami-084568db4383264d4"
   instance_type          = "t2.micro"
-  subnet_id              = aws_subnet.subnet-aws-server.id
+  subnet_id              = aws_subnet.subnet-aws.id
   associate_public_ip_address = true
   key_name               = "my-key-asir"
   user_data = file("user_data.sh")
@@ -42,8 +42,9 @@ resource "aws_instance" "asir-server-2" {
 resource "aws_instance" "asir-cliente-2" {
   ami                    = data.aws_ami.amazon_linux2.id
   instance_type          = "t2.micro"
-  subnet_id              = aws_subnet.subnet-aws-client.id
+  subnet_id              = aws_subnet.subnet-aws.id
   key_name               = "my-key-asir"
+  associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.asir-sg-client-2.id]
   tags = {
     Name = "asir-cliente-2"

@@ -9,14 +9,15 @@ gidNumber: 5000
 dn: uid=usuario1,ou=users,dc=mosquito,dc=com
 objectClass: inetOrgPerson
 objectClass: posixAccount
-objectClass: top
+objectClass: shadowAccount
 uid: usuario1
 sn: Usuario1
 cn: Usuario Uno
-userPassword: {SSHA}ICiDPDgZYOSpLZIQceZmngtUBQlQPnMC
-gidNumber: 5000
+userPassword: {SSHA}6bk2uFqDHG7V9ynbj+mQlI8R9X3ZYbGU
 uidNumber: 10000
+gidNumber: 5000
 homeDirectory: /home/usuario1
+loginShell: /bin/bash
 
 # Añadir usuario1 al grupo "admins"
 dn: cn=admins,ou=groups,dc=mosquito,dc=com

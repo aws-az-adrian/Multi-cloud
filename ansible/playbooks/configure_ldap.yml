@@ -4,7 +4,7 @@
   become: yes
 
   vars_files:
-    - vars/ldap.yml
+    - vars/ldap-server.yml
 
   tasks:
     - name: Actualizar e instalar paquetes necesarios
