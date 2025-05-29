@@ -5,7 +5,7 @@ resource "aws_instance" "asir-server-2" {
   subnet_id                   = aws_subnet.subnet-aws.id
   associate_public_ip_address = true
   key_name                    = "my-key-asir"
-  user_data                   = file("user_data.sh")
+  user_data                   = file("../../scripts/zero-config-server.sh")
   vpc_security_group_ids      = [aws_security_group.asir-sg-server-2.id]
   tags = {
     Name = "asir-server-2"
@@ -44,6 +44,7 @@ resource "aws_instance" "asir-cliente-2" {
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.subnet-aws.id
   key_name               = "my-key-asir"
+  user_data = file("../../scripts/install-zerotier-cliente.sh")
   vpc_security_group_ids = [aws_security_group.asir-sg-client-2.id]
   tags = {
     Name = "asir-cliente-2"
