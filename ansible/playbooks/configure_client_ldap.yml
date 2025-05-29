@@ -2,36 +2,19 @@
 - name: Configurar cliente LDAP
   hosts: ldap_clients
   become: yes
-  gather_facts: no  # Desactivamos temporalmente mientras instalamos Python
 
   vars_files:
     - vars/ldap-client.yml
 
-  vars:
-    ansible_python_interpreter: /usr/bin/python3.8
-    python_target_path: /usr/bin/python3.8
-
   tasks:
-    - name: Verificar si Python 3.8 ya está instalado
-      raw: test -f {{ python_target_path }}
-      register: python_check
-      ignore_errors: yes
-
-    - name: Instalar Python 3.8 usando amazon-linux-extras (si no está)
-      block:
-        - name: Habilitar amazon-linux-extras para Python 3.8
-          raw: amazon-linux-extras enable python3.8
-          when: python_check.rc != 0
-
-        - name: Instalar Python 3.8
-          raw: yum install -y python3.8
-          when: python_check.rc != 0
-
-    - name: Recolectar hechos con el Python correcto
-      ansible.builtin.setup:
-
-    - name: Instalar paquetes necesarios con yum (usando raw para evitar errores del módulo)
-      raw: yum install -y nss-pam-ldapd openldap-clients nscd oddjob-mkhomedir
+    - name: Instalar paquetes necesarios para LDAP (Amazon Linux)
+      yum:
+        name:
+          - nss-pam-ldapd
+          - openldap-clients
+          - nscd
+          - oddjob-mkhomedir
+        state: present
 
     - name: Crear directorio /etc/ldap si no existe
       file:
@@ -39,7 +22,7 @@
         state: directory
         owner: root
         group: root
-        mode: '0755'
+        mode: 0755
 
     - name: Configurar /etc/openldap/ldap.conf
       copy:
@@ -72,11 +55,14 @@
         - { key: 'shadow' }
       notify: Reiniciar servicios LDAP
 
-    - name: Configurar PAM para LDAP y creación de home
-      blockinfile:
-        path: /etc/pam.d/system-auth
-        marker: "# {mark} ANSIBLE MANAGED LDAP CONFIG"
-        block: |
+    - name: Configurar PAM en /etc/pam.d/system-auth (contenido completo)
+      copy:
+        dest: /etc/pam.d/system-auth
+        content: |
+          #%PAM-1.0
+          # This file is auto-generated.
+          # User changes will be destroyed the next time authconfig is run.
+          auth        required      pam_env.so
           auth        sufficient    pam_unix.so try_first_pass nullok
           auth        sufficient    pam_ldap.so use_first_pass
           auth        required      pam_deny.so
@@ -85,12 +71,16 @@
           account     sufficient    pam_ldap.so
           account     required      pam_permit.so
 
-          password    sufficient    pam_unix.so sha512 shadow try_first_pass use_authtok
+          password    requisite     pam_pwquality.so try_first_pass local_users_only retry=3 authtok_type=
+          password    sufficient    pam_unix.so try_first_pass use_authtok nullok sha512 shadow
           password    sufficient    pam_ldap.so use_authtok
           password    required      pam_deny.so
 
+          session     optional      pam_keyinit.so revoke
           session     required      pam_limits.so
           session     required      pam_mkhomedir.so skel=/etc/skel/ umask=0022
+          session     optional      pam_systemd.so
+          session     [success=1 default=ignore] pam_succeed_if.so service in crond quiet use_uid
           session     required      pam_unix.so
           session     optional      pam_ldap.so
 

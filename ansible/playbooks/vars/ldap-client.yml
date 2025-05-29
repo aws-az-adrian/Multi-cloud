@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-ldap_server_ip: "34.226.123.154"
-=======
-ldap_server_ip: "35.171.20.121"
->>>>>>> 4839437dafeec07774c745d5defedec44adb0f89
+ldap_server_ip: "44.204.43.158"
 ldap_base_dn: "dc=mosquito,dc=com"
 ldap_root_dn: "cn=admin,dc=mosquito,dc=com"
 ldap_admin_password: "Voleypadel123"
