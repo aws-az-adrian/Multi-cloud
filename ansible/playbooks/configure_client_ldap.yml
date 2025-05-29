@@ -2,19 +2,36 @@
 - name: Configurar cliente LDAP
   hosts: ldap_clients
   become: yes
+  gather_facts: no  # Desactivamos temporalmente mientras instalamos Python
 
   vars_files:
     - vars/ldap-client.yml
 
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.8
+    python_target_path: /usr/bin/python3.8
+
   tasks:
-    - name: Instalar paquetes necesarios para LDAP (Amazon Linux)
-      yum:
-        name:
-          - nss-pam-ldapd
-          - openldap-clients
-          - nscd
-          - oddjob-mkhomedir
-        state: present
+    - name: Verificar si Python 3.8 ya está instalado
+      raw: test -f {{ python_target_path }}
+      register: python_check
+      ignore_errors: yes
+
+    - name: Instalar Python 3.8 usando amazon-linux-extras (si no está)
+      block:
+        - name: Habilitar amazon-linux-extras para Python 3.8
+          raw: amazon-linux-extras enable python3.8
+          when: python_check.rc != 0
+
+        - name: Instalar Python 3.8
+          raw: yum install -y python3.8
+          when: python_check.rc != 0
+
+    - name: Recolectar hechos con el Python correcto
+      ansible.builtin.setup:
+
+    - name: Instalar paquetes necesarios con yum (usando raw para evitar errores del módulo)
+      raw: yum install -y nss-pam-ldapd openldap-clients nscd oddjob-mkhomedir
 
     - name: Crear directorio /etc/ldap si no existe
       file:
@@ -22,7 +39,7 @@
         state: directory
         owner: root
         group: root
-        mode: 0755
+        mode: '0755'
 
     - name: Configurar /etc/openldap/ldap.conf
       copy:

@@ -1,0 +1,22 @@
+{
+  "ip_client_2": {
+    "sensitive": false,
+    "type": "string",
+    "value": "192.168.1.41"
+  },
+  "ip_public_client_2": {
+    "sensitive": false,
+    "type": "string",
+    "value": "52.207.243.190"
+  },
+  "ip_public_server_2": {
+    "sensitive": false,
+    "type": "string",
+    "value": "35.171.20.121"
+  },
+  "ip_server_2": {
+    "sensitive": false,
+    "type": "string",
+    "value": "192.168.1.168"
+  }
+}

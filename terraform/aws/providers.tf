@@ -35,5 +35,3 @@ data "aws_ami" "amazon_linux2" {
 #     name   = "architecture"
 #     values = ["x86_64"]
 #   }
-# }
-###
