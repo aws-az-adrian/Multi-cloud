@@ -8,11 +8,15 @@ variable "location" {
   type        = string
 }
 
-variable "admin_username" {
+variable "admin_username_server" {
   description = "Nombre del usuario administrador para las máquinas virtuales"
   type        = string
 }
 
+variable "admin_username_client" {
+  description = "Nombre del usuario administrador para las máquinas virtuales"
+  type        = string
+}
 variable "admin_password" {
   description = "Contraseña del administrador (necesaria para Windows)"
   type        = string
@@ -24,29 +28,47 @@ variable "vm_size" {
   type        = string
 }
 
-variable "image_publisher" {
-  description = "Publisher de la imagen de la VM"
+# Imagen para Windows Server
+variable "server_image_publisher" {
+  description = "Publisher de la imagen de la VM Windows Server"
   type        = string
 }
 
-variable "image_offer" {
-  description = "Tipo de oferta de imagen (Windows Server, etc.)"
+variable "server_image_offer" {
+  description = "Tipo de oferta de la imagen Windows Server"
   type        = string
 }
 
-variable "image_sku" {
-  description = "SKU de la imagen (versión específica)"
-  type        = string
-
-}
-
-variable "image_version" {
-  description = "Versión de la imagen (latest suele funcionar)"
+variable "server_image_sku" {
+  description = "SKU de la imagen Windows Server"
   type        = string
 }
 
+variable "server_image_version" {
+  description = "Versión de la imagen Windows Server"
+  type        = string
+}
 
+# Imagen para Windows Cliente
+variable "client_image_publisher" {
+  description = "Publisher de la imagen de la VM Windows Cliente"
+  type        = string
+}
 
+variable "client_image_offer" {
+  description = "Tipo de oferta de la imagen Windows Cliente"
+  type        = string
+}
+
+variable "client_image_sku" {
+  description = "SKU de la imagen Windows Cliente"
+  type        = string
+}
+
+variable "client_image_version" {
+  description = "Versión de la imagen Windows Cliente"
+  type        = string
+}
 
 
     # publisher = "MicrosoftWindowsDesktop"

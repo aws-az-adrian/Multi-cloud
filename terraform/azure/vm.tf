@@ -1,13 +1,48 @@
+# Public IP para Windows Server
+resource "azurerm_public_ip" "wserver-publicip" {
+  name                = "wserver-publicip"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-asir-2.name
+  allocation_method   = "Dynamic"
+}
+
+# Public IP para Windows Cliente
+resource "azurerm_public_ip" "wclient-publicip" {
+  name                = "wclient-publicip"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-asir-2.name
+  allocation_method   = "Dynamic"
+}
+
 # NIC para Windows Server
 resource "azurerm_network_interface" "nic_wserver-asir-2" {
   name                = "nic-wserver-asir-2"
   location            = var.location
   resource_group_name = azurerm_resource_group.rg-asir-2.name
 
+  depends_on = [azurerm_public_ip.wserver-publicip]
+
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.subnet-asir-2.id
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.wserver-publicip.id
+  }
+}
+
+# NIC para Windows Cliente
+resource "azurerm_network_interface" "nic_wclient-asir-2" {
+  name                = "nic-wclient-asir-2"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-asir-2.name
+
+  depends_on = [azurerm_public_ip.wclient-publicip]
+
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.subnet-asir-2.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.wclient-publicip.id
   }
 }
 
@@ -16,39 +51,26 @@ resource "azurerm_windows_virtual_machine" "wserver-asir-2" {
   name                  = "wserver-asir-2"
   resource_group_name   = azurerm_resource_group.rg-asir-2.name
   location              = var.location
-  size                  = var.vm_size # Tamaño más barato
-  admin_username        = var.admin_username
+  size                  = var.vm_size
+  admin_username        = var.admin_username_server
   admin_password        = var.admin_password
   network_interface_ids = [azurerm_network_interface.nic_wserver-asir-2.id]
 
   os_disk {
     caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"  # Discos más baratos
+    storage_account_type = "Standard_LRS"
   }
 
   source_image_reference {
-    publisher = var.image_publisher
-    offer     = var.image_offer
-    sku       = var.image_sku
-    version   = var.image_version
+    publisher = var.server_image_publisher
+    offer     = var.server_image_offer
+    sku       = var.server_image_sku
+    version   = var.server_image_version
   }
 
   provision_vm_agent = true
 
   custom_data = base64encode(file("${path.module}/../../scripts/install-zerotier.ps1"))
-}
-
-# NIC para Windows Cliente
-resource "azurerm_network_interface" "nic_wclient-asir-2" {
-  name                = "nic-wclient-asir-2"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.subnet-asir-2.id
-    private_ip_address_allocation = "Dynamic"
-  }
 }
 
 # VM Windows Cliente (con ZeroTier)
@@ -57,23 +79,32 @@ resource "azurerm_windows_virtual_machine" "wclient-asir-2" {
   resource_group_name   = azurerm_resource_group.rg-asir-2.name
   location              = var.location
   size                  = var.vm_size
-  admin_username        = var.admin_username
+  admin_username        = var.admin_username_client
   admin_password        = var.admin_password
   network_interface_ids = [azurerm_network_interface.nic_wclient-asir-2.id]
 
   os_disk {
     caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"  # Discos más baratos
+    storage_account_type = "Standard_LRS"
   }
 
   source_image_reference {
-    publisher = "MicrosoftWindowsDesktop"
-    offer     = "windows-10"
-    sku       = "win10-21h2-pro"
-    version   = "latest"
+    publisher = var.client_image_publisher
+    offer     = var.client_image_offer
+    sku       = var.client_image_sku
+    version   = var.client_image_version
   }
 
   provision_vm_agent = true
 
   custom_data = base64encode(file("${path.module}/../../scripts/install-zerotier.ps1"))
+}
+
+# Outputs de IP Pública
+output "wserver_public_ip" {
+  value = azurerm_public_ip.wserver-publicip.ip_address
+}
+
+output "wclient_public_ip" {
+  value = azurerm_public_ip.wclient-publicip.ip_address
 }
