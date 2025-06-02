@@ -49,5 +49,30 @@ resource "aws_instance" "asir-cliente-2" {
   tags = {
     Name = "asir-cliente-2"
   }
+    provisioner "file" {
+    source      = "keys/my-key-asir.pem"
+    destination = "/home/ec2-user/my-key-asir.pem"
+
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("keys/my-key-asir.pem") # Tu clave para conectarte a Ubuntu
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod 400 /home/ec2-user/my-key-asir.pem"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("keys/my-key-asir.pem") # Tu clave para conectarte a Ubuntu
+      host        = self.public_ip
+    }
+
+  }
 }
 

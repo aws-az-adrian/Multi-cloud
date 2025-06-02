@@ -2,6 +2,36 @@
 - name: Configurar cliente LDAP
   hosts: ldap_clients
   become: yes
+  gather_facts: no  # <--- Importante para que Ansible no falle antes de instalar Python
+
+  pre_tasks:
+    - name: Verificar si python3.8 está instalado
+      stat:
+        path: /usr/bin/python3.8
+      register: python38_check
+
+    - name: Habilitar repositorio python3.8 si no está instalado
+      when: not python38_check.stat.exists
+      shell: amazon-linux-extras enable python3.8
+      args:
+        executable: /bin/bash
+
+    - name: Limpiar metadatos YUM
+      when: not python38_check.stat.exists
+      command: yum clean metadata
+
+    - name: Instalar python3.8 si no está presente
+      when: not python38_check.stat.exists
+      yum:
+        name: python3.8
+        state: present
+
+    - name: Definir intérprete Python 3.8 para el resto del play
+      set_fact:
+        ansible_python_interpreter: /usr/bin/python3.8
+
+    - name: Recoger facts manualmente con Python 3.8
+      setup:
 
   vars_files:
     - vars/ldap-client.yml

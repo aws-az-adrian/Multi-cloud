@@ -7,7 +7,6 @@ import os
 script_dir = os.path.dirname(os.path.abspath(__file__))
 terraform_output_path = os.path.abspath(os.path.join(script_dir, '..', 'terraform_output.json'))
 
-
 # Leer el archivo JSON de Terraform
 with open(terraform_output_path) as f:
     tf_data = json.load(f)
@@ -42,8 +41,9 @@ inventory = {
                 "ansible_host": ip_public_client,
                 "private_ip": ip_private_client,
                 "ansible_user": "ec2-user",
-                "ansible_ssh_private_key_file": ssh_key_path
-            }
+                "ansible_ssh_private_key_file": ssh_key_path,
+                "ansible_python_interpreter": "/usr/bin/python3"  # usa Python 3.7 primero
+}
         }
     }
 }

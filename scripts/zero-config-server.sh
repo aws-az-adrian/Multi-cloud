@@ -12,23 +12,23 @@ iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 # iptables -A FORWARD -i zerotier-one -o eth0 -j ACCEPT
 iptables -A FORWARD -i eth0 -o zerotier-one -j ACCEPT
 
-# # Instalar ZeroTier
-# curl -s https://install.zerotier.com | bash
+# Instalar ZeroTier
+curl -s https://install.zerotier.com | bash
 
-# # Habilitar y arrancar ZeroTier
-# systemctl enable zerotier-one
-# systemctl start zerotier-one
+# Habilitar y arrancar ZeroTier
+systemctl enable zerotier-one
+systemctl start zerotier-one
 
-# # Esperar a que el demonio esté listo
-# while ! zerotier-cli info &>/dev/null; do
-#   sleep 1
-# done
+# Esperar a que el demonio esté listo
+while ! zerotier-cli info &>/dev/null; do
+  sleep 1
+done
 
-# # Unirse a la red de ZeroTier
-# zerotier-cli join <ZEROTIER_NETWORK_ID>
+# Unirse a la red de ZeroTier
+zerotier-cli join 233ccaac27f86b0f
 
-# # Ver estado
-# zerotier-cli info
+# Ver estado
+zerotier-cli info
 
 # Cambiar permisos de clave
 chmod 400 "my-key-asir.pem"
