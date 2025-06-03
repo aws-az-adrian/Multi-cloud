@@ -14,27 +14,6 @@ resource "azurerm_public_ip" "wclient-publicip" {
   allocation_method   = "Static"
 }
 
-# NSG para permitir WinRM
-resource "azurerm_network_security_group" "nsg" {
-  name                = "nsg-asir-2"
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg-asir-2.name
-}
-
-resource "azurerm_network_security_rule" "allow_winrm" {
-  name                        = "Allow-WinRM"
-  priority                    = 1010
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_range      = "5986"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg-asir-2.name
-  network_security_group_name = azurerm_network_security_group.nsg.name
-}
-
 # NIC para Windows Server
 resource "azurerm_network_interface" "nic_wserver-asir-2" {
   name                = "nic-wserver-asir-2"
@@ -48,7 +27,6 @@ resource "azurerm_network_interface" "nic_wserver-asir-2" {
     public_ip_address_id          = azurerm_public_ip.wserver-publicip.id
   }
 
-  network_security_group_id = azurerm_network_security_group.nsg_asir_2.id
   tags = {
     Name = "nic-wserver-asir-2"
   }
@@ -66,8 +44,6 @@ resource "azurerm_network_interface" "nic_wclient-asir-2" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.wclient-publicip.id
   }
-
-  network_security_group_id = azurerm_network_security_group.nsg_asir_2.id
 }
 
 # VM Windows Server (con AD y ZeroTier)
@@ -94,49 +70,11 @@ resource "azurerm_windows_virtual_machine" "wserver-asir-2" {
 
   provision_vm_agent = true
 
-  custom_data = base64encode(file("${path.module}/../../scripts/install-zerotier.ps1"))
+
 
   identity {
     type = "SystemAssigned"
   }
-}
-
-# Extensión para habilitar WinRM
-resource "azurerm_virtual_machine_extension" "enable_winrm" {
-  name                 = "enableWinRM"
-  virtual_machine_id   = azurerm_windows_virtual_machine.wserver-asir-2.id
-  publisher            = "Microsoft.Compute"
-  type                 = "CustomScriptExtension"
-  type_handler_version = "1.10"
-
-  settings = <<SETTINGS
-{
-  "commandToExecute": "powershell -Command \"Enable-PSRemoting -Force; Set-Item -Path WSMan:\\\\localhost\\Service\\AllowUnencrypted -Value $true; winrm set winrm/config/service/auth '@{Basic=\\\"true\\\"}'; New-SelfSignedCertificate -DnsName 'localhost' -CertStoreLocation Cert:\\\\LocalMachine\\\\My\""
-}
-SETTINGS
-}
-
-# Provisioner para copiar el archivo PEM a la VM Windows Server
-resource "null_resource" "copy_pem_to_windows" {
-  provisioner "file" {
-    source      = "${path.module}/keys/my-key-asir.pem"
-    destination = "C:/Users/${var.admin_username_server}/Desktop/my-key-asir.pem"
-
-    connection {
-      type     = "winrm"
-      user     = var.admin_username_server
-      password = var.admin_password
-      host     = azurerm_public_ip.wserver-publicip.ip_address
-      port     = 5986
-      https    = true
-      insecure = true
-    }
-  }
-
-  depends_on = [
-    azurerm_windows_virtual_machine.wserver-asir-2,
-    azurerm_virtual_machine_extension.enable_winrm
-  ]
 }
 
 # VM Windows Cliente (con ZeroTier)
@@ -162,7 +100,6 @@ resource "azurerm_windows_virtual_machine" "wclient-asir-2" {
   }
 
   provision_vm_agent = true
-  # custom_data = base64encode(file("${path.module}/../../scripts/install-zerotier.ps1"))
 }
 
 # Outputs de IP Pública
@@ -174,14 +111,13 @@ output "wclient_public_ip" {
   value = azurerm_public_ip.wclient-publicip.ip_address
 }
 
-## ACTIVE DIRECTORY INTEGRATION
-
+# Integración con Active Directory
 resource "azuread_group" "vm_access_group" {
   display_name     = "group-ad-asir-2"
   security_enabled = true
 }
 
-resource "data" "azuread_user" "vm_user" {
+data "azuread_user" "vm_user" {
   user_principal_name = "pepe@adrianvilchezgonzalez1outlo.onmicrosoft.com"
 }
 
@@ -207,4 +143,18 @@ resource "azurerm_role_assignment" "vm_login_manage" {
 
 data "azuread_group" "vm_access_group" {
   object_id = azuread_group.vm_access_group.object_id
+}
+resource "azurerm_virtual_machine_extension" "zerotier_install" {
+  name                 = "zerotier-install"
+  virtual_machine_id   = azurerm_windows_virtual_machine.wserver-asir-2.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = jsonencode({
+    fileUris         = ["https://raw.githubusercontent.com/aws-az-adrian/Multi-cloud/main/scripts/install-zerotier.ps1"]
+    commandToExecute = "powershell -ExecutionPolicy Unrestricted -File install-zerotier.ps1"
+  })
+
+  depends_on = [azurerm_windows_virtual_machine.wserver-asir-2]
 }

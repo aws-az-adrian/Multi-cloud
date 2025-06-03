@@ -1,36 +1,44 @@
-# === 1. Instalar Active Directory Domain Services ===
-Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
+#ps1_sysnative
+# Instalar y unir a ZeroTier (se ejecuta como custom_data al iniciar VM)
 
-$DomainName = "asir2.com"
-$SafeModePassword = ConvertTo-SecureString "Mosquito123." -AsPlainText -Force
+$ErrorActionPreference = "Stop"
 
-Install-ADDSForest `
-    -DomainName $DomainName `
-    -SafeModeAdministratorPassword $SafeModePassword `
-    -InstallDns `
-    -Force
-
-# IMPORTANTE: El servidor se reiniciará automáticamente después de promoverse a DC.
-# Por eso todo lo que va después de esto puede no ejecutarse a menos que hagas un segundo script post-reinicio.
-# Alternativa: usar Scheduled Task o separar en dos scripts (antes y después del reinicio).
-
-# === 2. Instalar y unir a ZeroTier ===
-# IMPORTANTE: este bloque solo funcionará si se ejecuta después del reinicio
-
+# === Variables ===
 $ztInstaller = "https://download.zerotier.com/RELEASES/1.12.2/dist/ZeroTier%20One.msi"
-$networkID = "233ccaac27f86b0f"  # Sustituye por el tuyo
-
 $ztPath = "C:\ZeroTierOne.msi"
+$networkID = "233ccaac27f86b0f"  # Sustituye por tu ID real
+$cliPath = "$env:ProgramData\ZeroTier\One\zerotier-one_x64.exe"
 
-Invoke-WebRequest -Uri $ztInstaller -OutFile $ztPath
-Start-Process msiexec.exe -Wait -ArgumentList '/i', $ztPath, '/quiet'
+# === Descargar instalador ===
+try {
+    Invoke-WebRequest -Uri $ztInstaller -OutFile $ztPath -UseBasicParsing
+} catch {
+    Write-Output "ERROR: No se pudo descargar ZeroTier MSI"
+    exit 1
+}
+
+# === Instalar ZeroTier en modo silencioso ===
+Start-Process msiexec.exe -Wait -ArgumentList "/i `"$ztPath`" /quiet"
+
+Start-Sleep -Seconds 15
+
+# === Esperar a que ZeroTier esté completamente instalado ===
+$maxTries = 10
+$try = 0
+while (!(Test-Path $cliPath) -and ($try -lt $maxTries)) {
+    Start-Sleep -Seconds 5
+    $try++
+}
+
+if (!(Test-Path $cliPath)) {
+    Write-Output "ERROR: El binario de ZeroTier no se encontró en $cliPath"
+    exit 1
+}
+
+# === Unirse a la red ZeroTier ===
+& $cliPath -q join $networkID
 Start-Sleep -Seconds 10
 
-# Unirse a la red ZeroTier
-& "$env:ProgramFiles\ZeroTier\One\zerotier-cli.bat" join $networkID
-Start-Sleep -Seconds 10
-& "$env:ProgramFiles\ZeroTier\One\zerotier-cli.bat" listnetworks
-
-# Asegurar que el servicio de ZeroTier esté en automático
+# === Verificar y configurar servicio ===
 Set-Service -Name "ZeroTierOneService" -StartupType Automatic
 Start-Service -Name "ZeroTierOneService"

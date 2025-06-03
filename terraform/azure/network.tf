@@ -9,5 +9,12 @@ resource "azurerm_subnet" "subnet-asir-2" {
   name                 = "subnet-asir-2"
   resource_group_name  = azurerm_resource_group.rg-asir-2.name
   virtual_network_name = azurerm_virtual_network.vnet-asir-2.name
-  address_prefixes     = ["192.168.2.0/25"] 
+  address_prefixes     = ["192.168.2.0/25"]
+}
+
+resource "azurerm_subnet" "bastion-subnet-asir-2" {
+  name                 = "AzureBastionSubnet"  # Requisito obligatorio
+  resource_group_name  = azurerm_resource_group.rg-asir-2.name
+  virtual_network_name = azurerm_virtual_network.vnet-asir-2.name
+  address_prefixes     = ["192.168.2.128/25"]  # Segunda mitad de la VNet
 }

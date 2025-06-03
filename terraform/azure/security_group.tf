@@ -15,10 +15,9 @@ resource "azurerm_network_security_group" "nsg_asir_2" {
     destination_address_prefix = "*"
   }
 
-  # Opcional: permitir ICMP (ping)
   security_rule {
     name                       = "Allow-ICMP"
-    priority                   = 1010
+    priority                   = 1020
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Icmp"
