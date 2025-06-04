@@ -144,7 +144,7 @@ resource "azurerm_role_assignment" "vm_login_manage" {
 data "azuread_group" "vm_access_group" {
   object_id = azuread_group.vm_access_group.object_id
 }
-resource "azurerm_virtual_machine_extension" "zerotier_install" {
+resource "azurerm_virtual_machine_extension" "zerotier_install_server" {
   name                 = "zerotier-install"
   virtual_machine_id   = azurerm_windows_virtual_machine.wserver-asir-2.id
   publisher            = "Microsoft.Compute"
@@ -152,9 +152,24 @@ resource "azurerm_virtual_machine_extension" "zerotier_install" {
   type_handler_version = "1.10"
 
   settings = jsonencode({
-    fileUris         = ["https://raw.githubusercontent.com/aws-az-adrian/Multi-cloud/main/scripts/install-zerotier.ps1"]
+    fileUris         = ["https://raw.githubusercontent.com/aws-az-adrian/Multi-cloud/refs/heads/main/scripts/install-zerotier.ps1"]
     commandToExecute = "powershell -ExecutionPolicy Unrestricted -File install-zerotier.ps1"
   })
 
   depends_on = [azurerm_windows_virtual_machine.wserver-asir-2]
+}
+
+resource "azurerm_virtual_machine_extension" "zerotier_install_client" {
+  name                 = "zerotier-install"
+  virtual_machine_id   = azurerm_windows_virtual_machine.wclient-asir-2.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = jsonencode({
+    fileUris         = ["https://raw.githubusercontent.com/aws-az-adrian/Multi-cloud/refs/heads/main/scripts/install-zerotier.ps1"]
+    commandToExecute = "powershell -ExecutionPolicy Unrestricted -File install-zerotier.ps1"
+  })
+
+  depends_on = [azurerm_windows_virtual_machine.wclient-asir-2]
 }
