@@ -111,39 +111,7 @@ output "wclient_public_ip" {
   value = azurerm_public_ip.wclient-publicip.ip_address
 }
 
-# Integración con Active Directory
-resource "azuread_group" "vm_access_group" {
-  display_name     = "group-ad-asir-2"
-  security_enabled = true
-}
 
-data "azuread_user" "vm_user" {
-  user_principal_name = "pepe@adrianvilchezgonzalez1outlo.onmicrosoft.com"
-}
-
-resource "azuread_group_member" "add_user_to_group" {
-  group_object_id  = azuread_group.vm_access_group.object_id
-  member_object_id = data.azuread_user.vm_user.object_id
-}
-
-resource "azurerm_virtual_machine_extension" "aad_login_windows" {
-  name                       = "AADLoginForWindows"
-  virtual_machine_id         = azurerm_windows_virtual_machine.wserver-asir-2.id
-  publisher                  = "Microsoft.Azure.ActiveDirectory"
-  type                       = "AADLoginForWindows"
-  type_handler_version       = "1.0"
-  auto_upgrade_minor_version = true
-}
-
-resource "azurerm_role_assignment" "vm_login_manage" {
-  scope                = azurerm_windows_virtual_machine.wserver-asir-2.id
-  role_definition_name = "Virtual Machine User Login"
-  principal_id         = azuread_group.vm_access_group.object_id
-}
-
-data "azuread_group" "vm_access_group" {
-  object_id = azuread_group.vm_access_group.object_id
-}
 resource "azurerm_virtual_machine_extension" "zerotier_install_server" {
   name                 = "zerotier-install"
   virtual_machine_id   = azurerm_windows_virtual_machine.wserver-asir-2.id
